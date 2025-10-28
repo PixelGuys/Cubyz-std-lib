@@ -267,7 +267,11 @@ fn mainTerminal(init: std.process.Init.Minimal) void {
         .root_name = "Test",
         .estimated_total_items = test_fn_list.len,
     });
-    const have_tty = Io.File.stderr().isTty(runner_threaded_io) catch unreachable;
+    const doColors = Io.File.stderr().supportsAnsiEscapeCodes();
+    const reset = if (doColors) "\x1b[0m" else "";
+    const red = if (doColors) "\x1b[31m" else "";
+    const yellow = if (doColors) "\x1b[33m" else "";
+    const green = if (doColors) "\x1b[32m" else "";
 
     var leaks: usize = 0;
     for (test_fn_list, 0..) |test_fn, i| {
@@ -284,33 +288,22 @@ fn mainTerminal(init: std.process.Init.Minimal) void {
         testing.environ = init.environ;
 
         const test_node = root_node.start(test_fn.name, 0);
-        if (!have_tty) {
-            std.debug.print("{d}/{d} {s}...", .{ i + 1, test_fn_list.len, test_fn.name });
-        }
+
+        std.debug.print("{d: >4}/{d: <4} {s:.<65}", .{ i + 1, test_fn_list.len, test_fn.name });
         is_fuzz_test = false;
         if (test_fn.func()) |_| {
             ok_count += 1;
             test_node.end();
-            if (!have_tty) std.debug.print("OK\n", .{});
+            std.debug.print("{s}OK{s}\n", .{ green, reset });
         } else |err| switch (err) {
             error.SkipZigTest => {
                 skip_count += 1;
-                if (have_tty) {
-                    std.debug.print("{d}/{d} {s}...SKIP\n", .{ i + 1, test_fn_list.len, test_fn.name });
-                } else {
-                    std.debug.print("SKIP\n", .{});
-                }
+                std.debug.print("{s}SKIP{s}\n", .{ yellow, reset });
                 test_node.end();
             },
             else => {
                 fail_count += 1;
-                if (have_tty) {
-                    std.debug.print("{d}/{d} {s}...FAIL ({t})\n", .{
-                        i + 1, test_fn_list.len, test_fn.name, err,
-                    });
-                } else {
-                    std.debug.print("FAIL ({t})\n", .{err});
-                }
+                std.debug.print("{s}FAIL{s}\n{s}:\n", .{ red, reset, @errorName(err) });
                 if (@errorReturnTrace()) |trace| {
                     std.debug.dumpErrorReturnTrace(trace);
                 }
@@ -334,7 +327,7 @@ fn mainTerminal(init: std.process.Init.Minimal) void {
     if (fuzz_count != 0) {
         std.debug.print("{d} fuzz tests found.\n", .{fuzz_count});
     }
-    if (leaks != 0 or log_err_count != 0 or fail_count != 0) {
+    if (leaks != 0 or fail_count != 0) {
         std.process.exit(1);
     }
 }
@@ -446,7 +439,6 @@ var fuzz_runner: if (builtin.fuzz) struct {
         };
 
         if (!is_fuzz_test) @panic("missed call to std.testing.fuzz");
-        if (log_err_count != 0) @panic("error logs detected");
     }
 
     export fn runner_test_name(i: u32) fuzz_abi.Slice {

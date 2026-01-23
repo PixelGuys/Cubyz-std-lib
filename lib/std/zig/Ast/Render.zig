@@ -776,12 +776,12 @@ fn renderExpression(r: *Render, node: Ast.Node.Index, space: Space) Error!void {
                 return renderToken(r, rbrace, space);
             } else {
                 // There is no trailing comma so render everything on one line.
-                try renderToken(r, lbrace, .none);
+                try renderToken(r, lbrace, .space);
                 var i = lbrace + 1;
                 while (i < rbrace) : (i += 1) {
                     switch (tree.tokenTag(i)) {
                         .doc_comment => unreachable, // TODO
-                        .identifier => try renderIdentifier(r, i, if(i + 1 != rbrace) .comma_space else .none, .eagerly_unquote),
+                        .identifier => try renderIdentifier(r, i, .comma_space, .eagerly_unquote),
                         .comma => {},
                         else => unreachable,
                     }

@@ -869,7 +869,7 @@ fn renderExpression(r: *Render, node: Ast.Node.Index, space: Space) Error!void {
 
             const rparen = tree.lastToken(full.ast.condition) + 1;
 
-            try renderToken(r, full.ast.switch_token, .none); // switch
+            try renderToken(r, full.ast.switch_token, .space); // switch
             try renderToken(r, full.ast.switch_token + 1, .none); // (
             try renderExpression(r, full.ast.condition, .none); // condition expression
             try renderToken(r, rparen, .space); // )
@@ -1301,7 +1301,7 @@ fn renderWhile(r: *Render, while_node: Ast.full.While, space: Space) Error!void 
         try renderToken(r, inline_token, .space); // inline
     }
 
-    try renderToken(r, while_node.ast.while_token, .none); // if/for/while
+    try renderToken(r, while_node.ast.while_token, .space); // if/for/while
     try renderToken(r, while_node.ast.while_token + 1, .none); // lparen
     try renderExpression(r, while_node.ast.cond_expr, .none); // condition
 
@@ -1428,7 +1428,7 @@ fn renderFor(r: *Render, for_node: Ast.full.For, space: Space) Error!void {
         try renderToken(r, inline_token, .space); // inline
     }
 
-    try renderToken(r, for_node.ast.for_token, .none); // if/for/while
+    try renderToken(r, for_node.ast.for_token, .space); // if/for/while
 
     const lparen = for_node.ast.for_token + 1;
     try renderParamList(r, lparen, for_node.ast.inputs, .space);
@@ -1681,7 +1681,7 @@ fn renderFnProto(r: *Render, fn_proto: Ast.full.FnProto, space: Space) Error!voi
         try renderIdentifier(r, after_fn_token, .none, .preserve_when_shadowing); // name
         break :blk after_fn_token + 1;
     } else blk: {
-        try renderToken(r, fn_proto.ast.fn_token, .none); // fn
+        try renderToken(r, fn_proto.ast.fn_token, .space); // fn
         break :blk fn_proto.ast.fn_token + 1;
     };
     assert(tree.tokenTag(lparen) == .l_paren);
@@ -2393,9 +2393,9 @@ fn renderContainerDecl(
         }
 
         // Print all the declarations on the same line.
-        try renderToken(r, lbrace, .none); // lbrace
-        for (container_decl.ast.members, 0..) |member, i| {
-            try renderMember(r, container, member, if(i + 1 != container_decl.ast.members.len) .space else .none);
+        try renderToken(r, lbrace, .space); // lbrace
+        for (container_decl.ast.members) |member| {
+            try renderMember(r, container, member, .space);
         }
         return renderToken(r, rbrace, space); // rbrace
     }

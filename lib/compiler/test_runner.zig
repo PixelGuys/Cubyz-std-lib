@@ -267,7 +267,7 @@ fn mainTerminal(init: std.process.Init.Minimal) void {
         .root_name = "Test",
         .estimated_total_items = test_fn_list.len,
     });
-    const doColors = Io.File.stderr().supportsAnsiEscapeCodes();
+    const doColors = Io.File.stderr().supportsAnsiEscapeCodes(runner_threaded_io) catch false;
     const reset = if (doColors) "\x1b[0m" else "";
     const red = if (doColors) "\x1b[31m" else "";
     const yellow = if (doColors) "\x1b[33m" else "";
